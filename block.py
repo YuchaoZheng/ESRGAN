@@ -56,40 +56,6 @@ def get_valid_padding(kernel_size, dilation):
     return padding
 
 
-class ConcatBlock(nn.Module):
-    # Concat the output of a submodule to its input
-    def __init__(self, submodule):
-        super(ConcatBlock, self).__init__()
-        self.sub = submodule
-
-    def forward(self, x):
-        output = torch.cat((x, self.sub(x)), dim=1)
-        return output
-
-    def __repr__(self):
-        tmpstr = 'Identity .. \n|'
-        modstr = self.sub.__repr__().replace('\n', '\n|')
-        tmpstr = tmpstr + modstr
-        return tmpstr
-
-
-class ShortcutBlock(nn.Module):
-    #Elementwise sum the output of a submodule to its input
-    def __init__(self, submodule):
-        super(ShortcutBlock, self).__init__()
-        self.sub = submodule
-
-    def forward(self, x):
-        output = x + self.sub(x)
-        return output
-
-    def __repr__(self):
-        tmpstr = 'Identity + \n|'
-        modstr = self.sub.__repr__().replace('\n', '\n|')
-        tmpstr = tmpstr + modstr
-        return tmpstr
-
-
 def sequential(*args):
     # Flatten Sequential. It unwraps nn.Sequential.
     if len(args) == 1:
@@ -121,6 +87,10 @@ def conv_block(in_nc, out_nc, kernel_size, stride=1, dilation=1, groups=1, bias=
     c = nn.Conv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride, padding=padding, \
             dilation=dilation, bias=bias, groups=groups)
     a = act(act_type) if act_type else None
+
+    '''
+    根据CNA还是NAC得到不同的sequential(p和c是在一起的)
+    '''
     if 'CNA' in mode:
         n = norm(norm_type, out_nc) if norm_type else None
         return sequential(p, c, n, a)
