@@ -56,6 +56,40 @@ def get_valid_padding(kernel_size, dilation):
     return padding
 
 
+class ConcatBlock(nn.Module):
+    # Concat the output of a submodule to its input
+    def __init__(self, submodule):
+        super(ConcatBlock, self).__init__()
+        self.sub = submodule
+
+    def forward(self, x):
+        output = torch.cat((x, self.sub(x)), dim=1)
+        return output
+
+    def __repr__(self):
+        tmpstr = 'Identity .. \n|'
+        modstr = self.sub.__repr__().replace('\n', '\n|')
+        tmpstr = tmpstr + modstr
+        return tmpstr
+
+
+class ShortcutBlock(nn.Module):
+    #Elementwise sum the output of a submodule to its input
+    def __init__(self, submodule):
+        super(ShortcutBlock, self).__init__()
+        self.sub = submodule
+
+    def forward(self, x):
+        output = x + self.sub(x)
+        return output
+
+    def __repr__(self):
+        tmpstr = 'Identity + \n|'
+        modstr = self.sub.__repr__().replace('\n', '\n|')
+        tmpstr = tmpstr + modstr
+        return tmpstr
+
+
 def sequential(*args):
     # Flatten Sequential. It unwraps nn.Sequential.
     if len(args) == 1:
